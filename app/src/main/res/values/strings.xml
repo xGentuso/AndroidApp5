@@ -1,0 +1,17 @@
+<resources>
+    <string name="app_name">SuperPodcast</string>
+    <string name="search_podcasts">Search Podcasts</string>
+    <string name="search">Search</string>
+    <string name="artist_name">Artist Name</string>
+    <string name="feed_url">Feed URL</string>
+    <string name="podcast_title">Podcast Title</string>
+    <string name="back">Back</string>
+    <string name="episodes">Episodes</string>
+    <string name="episode_title">Episode Title</string>
+    <string name="date">Date</string>
+    <string name="description">Description</string>
+    <string name="episode_detail">Episode Detail</string>
+    <string name="full_description">Full Description</string>
+    <string name="play">Play</string>
+    <string name="_00_00">00:00</string>
+</resources>

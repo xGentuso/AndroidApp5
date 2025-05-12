@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/navigation_discover"
+        android:icon="@android:drawable/ic_menu_search"
+        android:title="Discover" />
+
+    <item
+        android:id="@+id/navigation_subscriptions"
+        android:icon="@android:drawable/ic_menu_my_calendar"
+        android:title="Subscriptions" />
+
+    <item
+        android:id="@+id/navigation_downloads"
+        android:icon="@android:drawable/ic_menu_save"
+        android:title="Downloads" />
+
+    <item
+        android:id="@+id/navigation_profile"
+        android:icon="@android:drawable/ic_menu_myplaces"
+        android:title="Profile" />
+</menu>
