@@ -7,10 +7,12 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.inputmethod.EditorInfo
+import android.view.inputmethod.InputMethodManager
 import android.widget.Button
 import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
+import androidx.core.content.ContextCompat.getSystemService
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -34,9 +36,16 @@ class DiscoverFragment : Fragment() {
     private lateinit var recyclerView: RecyclerView
     private lateinit var progressIndicator: CircularProgressIndicator
     private lateinit var textViewEmptyState: TextView
+    private lateinit var textViewTrendingTitle: TextView
     private lateinit var swipeRefreshLayout: SwipeRefreshLayout
     private lateinit var adapter: PodcastAdapter
     private var currentSearchTerm = ""
+
+    // Popular podcast categories for trending content
+    private val trendingCategories = listOf(
+        "technology", "business", "comedy", "news", "health", "education", 
+        "science", "true crime", "sports", "music"
+    )
 
     private val retrofit = Retrofit.Builder()
         .baseUrl("https://itunes.apple.com/")
@@ -62,6 +71,7 @@ class DiscoverFragment : Fragment() {
         recyclerView = view.findViewById(R.id.recyclerView)
         progressIndicator = view.findViewById(R.id.progressIndicator)
         textViewEmptyState = view.findViewById(R.id.textViewEmptyState)
+        textViewTrendingTitle = view.findViewById(R.id.textViewTrendingTitle)
         swipeRefreshLayout = view.findViewById(R.id.swipeRefreshLayout)
 
         // Set up RecyclerView
@@ -90,6 +100,61 @@ class DiscoverFragment : Fragment() {
             if (currentSearchTerm.isNotEmpty()) {
                 searchPodcasts(currentSearchTerm)
             } else {
+                loadTrendingPodcasts()
+            }
+        }
+
+        // Load trending podcasts by default
+        loadTrendingPodcasts()
+    }
+
+    private fun loadTrendingPodcasts() {
+        // Get a random trending category
+        val randomCategory = trendingCategories.random()
+        textViewTrendingTitle.text = "Trending ${randomCategory.capitalize()} Podcasts"
+        
+        // Show loading state
+        progressIndicator.visibility = View.VISIBLE
+        textViewEmptyState.visibility = View.GONE
+        recyclerView.visibility = View.GONE
+
+        // Search for trending podcasts
+        viewLifecycleOwner.lifecycleScope.launch {
+            try {
+                val response = itunesApi.searchPodcasts(randomCategory, "podcast")
+                val podcasts = response.results.take(20) // Limit to 20 results
+
+                // Update UI based on results
+                if (podcasts.isEmpty()) {
+                    loadFallbackPodcasts()
+                } else {
+                    showResults(podcasts)
+                    currentSearchTerm = "" // Reset current search term
+                }
+            } catch (e: Exception) {
+                loadFallbackPodcasts()
+            } finally {
+                swipeRefreshLayout.isRefreshing = false
+            }
+        }
+    }
+
+    private fun loadFallbackPodcasts() {
+        // If trending podcasts fail to load, try a reliable category
+        viewLifecycleOwner.lifecycleScope.launch {
+            try {
+                val response = itunesApi.searchPodcasts("popular", "podcast")
+                val podcasts = response.results.take(20) // Limit to 20 results
+
+                if (podcasts.isEmpty()) {
+                    showEmptyState("Unable to load podcasts. Please search for a specific podcast.")
+                } else {
+                    textViewTrendingTitle.text = "Popular Podcasts"
+                    showResults(podcasts)
+                }
+            } catch (e: Exception) {
+                showError("No internet connection. Please check your network.")
+            } finally {
                 swipeRefreshLayout.isRefreshing = false
             }
         }
@@ -100,12 +165,19 @@ class DiscoverFragment : Fragment() {
         if (searchTerm.isNotEmpty()) {
             currentSearchTerm = searchTerm
             searchPodcasts(searchTerm)
+            
+            // Hide keyboard after search
+            val imm = requireContext().getSystemService(InputMethodManager::class.java)
+            imm?.hideSoftInputFromWindow(view?.windowToken, 0)
         } else {
             Toast.makeText(requireContext(), "Please enter a search term", Toast.LENGTH_SHORT).show()
         }
     }
 
     private fun searchPodcasts(term: String) {
+        // Update title
+        textViewTrendingTitle.text = "Search Results: $term"
+        
         // Show loading state
         progressIndicator.visibility = View.VISIBLE
         textViewEmptyState.visibility = View.GONE
@@ -153,5 +225,10 @@ class DiscoverFragment : Fragment() {
         recyclerView.visibility = View.GONE
         textViewEmptyState.text = message
         Toast.makeText(requireContext(), message, Toast.LENGTH_LONG).show()
+    }
+    
+    // Extension function to capitalize the first letter of a string
+    private fun String.capitalize(): String {
+        return this.replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }
     }
 }
