@@ -1,28 +1,27 @@
 package com.trios2025dj.superpodcast.ui
 
-import android.Manifest
-import android.app.DownloadManager
-import android.content.Context
-import android.content.pm.PackageManager
+import android.content.pm.ActivityInfo
 import android.net.Uri
-import android.os.Build
 import android.os.Bundle
-import android.os.Environment
 import android.util.Log
-import android.widget.TextView
+import android.view.Gravity
+import android.view.View
+import android.view.ViewGroup
+import android.view.WindowManager
 import android.widget.Button
+import android.widget.FrameLayout
+import android.widget.ImageButton
+import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.app.ActivityCompat
-import androidx.core.content.ContextCompat
 import androidx.core.text.HtmlCompat
 import com.google.android.exoplayer2.ExoPlayer
 import com.google.android.exoplayer2.MediaItem
 import com.google.android.exoplayer2.ui.PlayerView
 import com.google.android.material.appbar.MaterialToolbar
 import com.trios2025dj.superpodcast.R
-import android.content.pm.ActivityInfo
-import android.view.View
+import com.trios2025dj.superpodcast.data.SavedVideo
+import com.trios2025dj.superpodcast.data.VideoPreferences
 
 class EpisodeDetailActivity : AppCompatActivity() {
 
@@ -43,6 +42,8 @@ class EpisodeDetailActivity : AppCompatActivity() {
         playerView.useController = true
         playerView.controllerShowTimeoutMs = 3000   // Auto-hide after 3 sec
         playerView.controllerHideOnTouch = true     // Tapping will toggle controls
+        
+        // Show the controller
         playerView.showController()
 
         // Set up toolbar with back button
@@ -83,23 +84,51 @@ class EpisodeDetailActivity : AppCompatActivity() {
     
     private fun setupButtons(isVideoContent: Boolean) {
         // Get button references
-        val downloadButton = findViewById<Button>(R.id.buttonDownload)
+        val saveButton = findViewById<Button>(R.id.buttonDownload) // Reusing the download button for save functionality
         val shareButton = findViewById<Button>(R.id.buttonShare)
         
-        // Get media URL from intent
+        // Get media info from intent
         val audioUrl = intent.getStringExtra("audioUrl") ?: ""
         val videoUrl = intent.getStringExtra("videoUrl") ?: ""
         val title = intent.getStringExtra("title") ?: "episode"
+        val description = intent.getStringExtra("description") ?: ""
+        val podcastName = intent.getStringExtra("artist") ?: ""
         
-        // Configure download button
-        downloadButton?.setOnClickListener {
-            // Always use as download button regardless of content type
-            val urlToDownload = if (isVideoContent && videoUrl.isNotEmpty()) videoUrl else audioUrl
-            if (urlToDownload.isNotEmpty()) {
-                downloadMedia(urlToDownload, title)
-            } else {
-                Toast.makeText(this, "No media URL available for download", Toast.LENGTH_SHORT).show()
+        // Initialize VideoPreferences
+        val videoPrefs = VideoPreferences(this)
+        
+        // Configure save button - only show for video content
+        if (isVideoContent && videoUrl.isNotEmpty()) {
+            // Change button text to "Save Video"
+            saveButton?.text = if (videoPrefs.isVideoSaved(videoUrl)) "Remove Video" else "Save Video"
+            
+            // Make button visible
+            saveButton?.visibility = View.VISIBLE
+            
+            // Set click listener
+            saveButton?.setOnClickListener {
+                if (videoPrefs.isVideoSaved(videoUrl)) {
+                    // Video is already saved, so remove it
+                    videoPrefs.deleteSavedVideo(videoUrl)
+                    saveButton.text = "Save Video"
+                    Toast.makeText(this, "Video removed from saved videos", Toast.LENGTH_SHORT).show()
+                } else {
+                    // Save the video
+                    val savedVideo = SavedVideo(
+                        title = title,
+                        videoUrl = videoUrl,
+                        description = description,
+                        podcastName = podcastName
+                    )
+                    
+                    videoPrefs.saveVideo(savedVideo)
+                    saveButton.text = "Remove Video"
+                    Toast.makeText(this, "Video saved successfully", Toast.LENGTH_SHORT).show()
+                }
             }
+        } else {
+            // For audio content, hide the save button
+            saveButton?.visibility = View.GONE
         }
         
         // Configure share button
@@ -118,6 +147,9 @@ class EpisodeDetailActivity : AppCompatActivity() {
             params.height = 600 // Fixed height in pixels for video
             playerView.layoutParams = params
             playerView.requestLayout()
+            
+            // Add a fullscreen button to the layout
+            addFullscreenButton()
             
             // Update UI to indicate video content
             findViewById<TextView>(R.id.textViewDescriptionLabel)?.text = "Video Description"
@@ -174,6 +206,44 @@ class EpisodeDetailActivity : AppCompatActivity() {
             e.printStackTrace()
         }
     }
+    
+    private fun addFullscreenButton() {
+        try {
+            // Find the fullscreen button that's already in the layout
+            val fullscreenButton = findViewById<ImageButton>(R.id.buttonFullscreen)
+            
+            // Only show the button for video content
+            if (isVideoContent) {
+                // Make sure the button is visible
+                fullscreenButton?.visibility = View.VISIBLE
+                
+                // Set click listener - directly enter fullscreen mode on first click
+                fullscreenButton?.setOnClickListener {
+                    // Force fullscreen state to false to ensure it enters fullscreen on first click
+                    isFullscreen = false
+                    toggleFullscreen()
+                }
+                
+                Log.d("EpisodeDetailActivity", "Fullscreen button set up successfully")
+            } else {
+                // Hide the button for audio-only content
+                fullscreenButton?.visibility = View.GONE
+            }
+        } catch (e: Exception) {
+            // Log any errors that occur during setup
+            Log.e("EpisodeDetailActivity", "Error setting up fullscreen button: ${e.message}")
+            e.printStackTrace()
+        }
+    }
+    
+    private fun updateFullscreenButton(fullscreenButton: ImageButton) {
+        // Change the icon based on current fullscreen state
+        if (isFullscreen) {
+            fullscreenButton.setImageResource(android.R.drawable.ic_menu_close_clear_cancel)
+        } else {
+            fullscreenButton.setImageResource(android.R.drawable.ic_menu_view)
+        }
+    }
 
     override fun onPause() {
         super.onPause()
@@ -193,125 +263,107 @@ class EpisodeDetailActivity : AppCompatActivity() {
         exoPlayer?.release()
         exoPlayer = null
     }
-
+    
     private fun toggleFullscreen() {
         if (isFullscreen) {
             // Exit fullscreen mode
             window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_VISIBLE
             requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
             isFullscreen = false
+            
+            // Restore original layout
+            setContentView(R.layout.activity_episode_detail)
+            
+            // Re-initialize player view and other UI elements
+            playerView = findViewById(R.id.playerView)
+            playerView.player = exoPlayer
+            
+            // Set player view properties
+            playerView.useController = true
+            playerView.controllerShowTimeoutMs = 3000
+            playerView.controllerHideOnTouch = true
+            playerView.showController()
+            
+            // Set player view size for video
+            val params = playerView.layoutParams
+            params.height = 600 // Fixed height in pixels for video
+            playerView.layoutParams = params
+            
+            // Re-setup the fullscreen button
+            addFullscreenButton()
+            
+            // Re-setup toolbar
+            val toolbar: MaterialToolbar = findViewById(R.id.toolbar)
+            toolbar.setNavigationOnClickListener {
+                onBackPressedDispatcher.onBackPressed()
+            }
+            
+            // Restore episode info in UI
+            restoreEpisodeInfo()
         } else {
-            // Enter fullscreen mode
+            // Save current playback position
+            val currentPosition = exoPlayer?.currentPosition ?: 0
+            
+            // Enter fullscreen mode with a completely new layout
+            setContentView(R.layout.fullscreen_player)
+            
+            // Get the new player view
+            playerView = findViewById(R.id.fullscreenPlayerView)
+            playerView.player = exoPlayer
+            
+            // Set player view properties
+            playerView.useController = true
+            playerView.controllerShowTimeoutMs = 3000
+            playerView.controllerHideOnTouch = true
+            
+            // Set window flags for true fullscreen
+            @Suppress("DEPRECATION")
+            window.setFlags(
+                WindowManager.LayoutParams.FLAG_FULLSCREEN,
+                WindowManager.LayoutParams.FLAG_FULLSCREEN
+            )
+            
+            // Set system UI flags for true fullscreen
             @Suppress("DEPRECATION")
             window.decorView.systemUiVisibility = (
                     View.SYSTEM_UI_FLAG_FULLSCREEN or
                     View.SYSTEM_UI_FLAG_HIDE_NAVIGATION or
+                    View.SYSTEM_UI_FLAG_LAYOUT_STABLE or
+                    View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION or
+                    View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or
                     View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
             )
+            
+            // Switch to landscape orientation
             requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
             isFullscreen = true
+            
+            // Add exit fullscreen button
+            val exitFullscreenButton = findViewById<ImageButton>(R.id.exitFullscreenButton)
+            exitFullscreenButton?.setOnClickListener {
+                toggleFullscreen()
+            }
+            
+            // Show the controller
+            playerView.showController()
         }
     }
     
-    private val STORAGE_PERMISSION_CODE = 100
-    private var pendingDownloadUrl: String? = null
-    private var pendingDownloadTitle: String? = null
-    
-    private fun downloadMedia(url: String, title: String) {
-        // Save the URL and title in case we need to request permissions
-        pendingDownloadUrl = url
-        pendingDownloadTitle = title
+    private fun restoreEpisodeInfo() {
+        // Get data from intent
+        val title = intent.getStringExtra("title") ?: ""
+        val pubDate = intent.getStringExtra("pubDate") ?: ""
+        val description = intent.getStringExtra("description") ?: ""
         
-        // Check if we have storage permission
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            // For Android 10 and above, we don't need explicit storage permission
-            startDownload(url, title)
-        } else {
-            // For older versions, check and request storage permission
-            if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) 
-                == PackageManager.PERMISSION_GRANTED) {
-                // We have permission, proceed with download
-                startDownload(url, title)
-            } else {
-                // Request permission
-                ActivityCompat.requestPermissions(
-                    this,
-                    arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE),
-                    STORAGE_PERMISSION_CODE
-                )
-                
-                // Inform user
-                Toast.makeText(this, "Storage permission needed to download files", Toast.LENGTH_SHORT).show()
-            }
-        }
-    }
-    
-    private fun startDownload(url: String, title: String) {
-        try {
-            // Create a download manager instance
-            val downloadManager = getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
+        // Set episode info in UI
+        findViewById<TextView>(R.id.textViewEpisodeTitle)?.text = title
+        findViewById<TextView>(R.id.textViewEpisodeDate)?.text = pubDate
+        findViewById<TextView>(R.id.textViewEpisodeDescription)?.text =
+            HtmlCompat.fromHtml(description, HtmlCompat.FROM_HTML_MODE_LEGACY)
             
-            // Determine file extension based on URL or content type
-            val fileExtension = when {
-                url.contains(".mp3") -> ".mp3"
-                url.contains(".mp4") -> ".mp4"
-                url.contains(".m4a") -> ".m4a"
-                else -> ".media"
-            }
-            
-            // Sanitize the title to create a valid filename
-            val sanitizedTitle = title.replace("[^a-zA-Z0-9.-]".toRegex(), "_")
-            val filename = "SuperPodcast_${sanitizedTitle}$fileExtension"
-            
-            // Create download request with proper settings
-            val request = DownloadManager.Request(Uri.parse(url))
-                .setTitle("Downloading $title")
-                .setDescription("Downloading podcast episode")
-                .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
-                .setAllowedOverMetered(true)
-                .setAllowedOverRoaming(true)
-                .setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, filename)
-            
-            // Add a MIME type based on the file extension
-            when (fileExtension) {
-                ".mp3" -> request.setMimeType("audio/mpeg")
-                ".mp4" -> request.setMimeType("video/mp4")
-                ".m4a" -> request.setMimeType("audio/m4a")
-                else -> request.setMimeType("audio/mpeg")
-            }
-            
-            // Enqueue the download and get the download ID
-            val downloadId = downloadManager.enqueue(request)
-            
-            // Log the download details for debugging
-            Log.d("EpisodeDetailActivity", "Download started: $filename from URL: $url")
-            
-            // Show success message to user
-            Toast.makeText(this, "Download started. Check Downloads tab when complete.", Toast.LENGTH_LONG).show()
-            
-        } catch (e: Exception) {
-            // Handle any errors
-            Log.e("EpisodeDetailActivity", "Download failed: ${e.message}", e)
-            Toast.makeText(this, "Download failed: ${e.message}", Toast.LENGTH_LONG).show()
-            e.printStackTrace()
-        }
-    }
-    
-    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        
-        if (requestCode == STORAGE_PERMISSION_CODE) {
-            if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                // Permission granted, proceed with download
-                pendingDownloadUrl?.let { url ->
-                    pendingDownloadTitle?.let { title ->
-                        startDownload(url, title)
-                    }
-                }
-            } else {
-                // Permission denied
-                Toast.makeText(this, "Storage permission denied. Cannot download files.", Toast.LENGTH_LONG).show()
-            }
+        // Update UI to indicate video content if needed
+        if (isVideoContent) {
+            findViewById<TextView>(R.id.textViewDescriptionLabel)?.text = "Video Description"
         }
     }
 }

@@ -18,10 +18,10 @@
         tools:layout="@layout/fragment_subscriptions" />
 
     <fragment
-        android:id="@+id/navigation_downloads"
-        android:name="com.trios2025dj.superpodcast.ui.fragments.DownloadsFragment"
-        android:label="Downloads"
-        tools:layout="@layout/fragment_downloads" />
+        android:id="@+id/navigation_saved_videos"
+        android:name="com.trios2025dj.superpodcast.ui.fragments.SavedVideosFragment"
+        android:label="Saved Videos"
+        tools:layout="@layout/fragment_saved_videos" />
 
     <fragment
         android:id="@+id/navigation_profile"

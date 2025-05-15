@@ -17,7 +17,7 @@ class PodcastDatabase(context: Context) : SQLiteOpenHelper(context, DATABASE_NAM
         // Table name
         const val TABLE_SUBSCRIPTIONS = "subscriptions"
 
-        // Column names
+        // Column names for subscriptions
         const val COLUMN_ID = "_id"
         const val COLUMN_TITLE = "title"
         const val COLUMN_ARTIST = "artist"
@@ -28,7 +28,7 @@ class PodcastDatabase(context: Context) : SQLiteOpenHelper(context, DATABASE_NAM
 
     override fun onCreate(db: SQLiteDatabase) {
         // Create subscriptions table
-        val createTableQuery = """
+        val createSubscriptionsTable = """
             CREATE TABLE $TABLE_SUBSCRIPTIONS (
                 $COLUMN_ID INTEGER PRIMARY KEY AUTOINCREMENT,
                 $COLUMN_TITLE TEXT NOT NULL,
@@ -39,7 +39,7 @@ class PodcastDatabase(context: Context) : SQLiteOpenHelper(context, DATABASE_NAM
             )
         """.trimIndent()
         
-        db.execSQL(createTableQuery)
+        db.execSQL(createSubscriptionsTable)
     }
 
     override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
@@ -133,4 +133,6 @@ class PodcastDatabase(context: Context) : SQLiteOpenHelper(context, DATABASE_NAM
         cursor.close()
         return subscriptions
     }
+    
+    // Saved video functionality has been moved to VideoPreferences class
 }

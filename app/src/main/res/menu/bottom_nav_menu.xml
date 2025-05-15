@@ -11,9 +11,9 @@
         android:title="Subscriptions" />
 
     <item
-        android:id="@+id/navigation_downloads"
-        android:icon="@android:drawable/ic_menu_save"
-        android:title="Downloads" />
+        android:id="@+id/navigation_saved_videos"
+        android:icon="@android:drawable/ic_menu_slideshow"
+        android:title="Saved Videos" />
 
     <item
         android:id="@+id/navigation_profile"

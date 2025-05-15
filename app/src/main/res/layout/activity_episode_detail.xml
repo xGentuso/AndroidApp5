@@ -102,15 +102,32 @@
                         app:layout_constraintStart_toStartOf="parent"
                         app:layout_constraintEnd_toEndOf="parent">
 
-                        <com.google.android.exoplayer2.ui.PlayerView
-                            android:id="@+id/playerView"
+                        <FrameLayout
                             android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:minHeight="200dp"
-                            app:show_buffering="when_playing"
-                            app:use_controller="true"
-                            app:resize_mode="fit"
-                            app:surface_type="texture_view" />
+                            android:layout_height="wrap_content">
+                            
+                            <com.google.android.exoplayer2.ui.PlayerView
+                                android:id="@+id/playerView"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:minHeight="200dp"
+                                app:show_buffering="when_playing"
+                                app:use_controller="true"
+                                app:resize_mode="fit"
+                                app:surface_type="texture_view" />
+                                
+                            <ImageButton
+                                android:id="@+id/buttonFullscreen"
+                                android:layout_width="40dp"
+                                android:layout_height="40dp"
+                                android:layout_gravity="end|top"
+                                android:layout_margin="8dp"
+                                android:background="#33000000"
+                                android:padding="8dp"
+                                android:src="@android:drawable/ic_menu_view"
+                                android:contentDescription="Toggle fullscreen" />
+                                
+                        </FrameLayout>
                     </com.google.android.material.card.MaterialCardView>
 
                     <!-- Action Buttons -->

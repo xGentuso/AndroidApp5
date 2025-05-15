@@ -28,7 +28,7 @@ class HomeActivity : AppCompatActivity() {
             setOf(
                 R.id.navigation_discover,
                 R.id.navigation_subscriptions,
-                R.id.navigation_downloads,
+                R.id.navigation_saved_videos,
                 R.id.navigation_profile
             )
         )
