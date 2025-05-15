@@ -20,7 +20,7 @@
         android:networkSecurityConfig="@xml/network_security_config"
         tools:targetApi="31">
         <activity
-            android:name="com.trios2025dj.superpodcast.ui.HomeActivity"
+            android:name="com.trios2025rm.superpodcast.ui.HomeActivity"
             android:exported="true"
             android:launchMode="singleTop">
             <intent-filter>
@@ -28,11 +28,11 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name="com.trios2025dj.superpodcast.ui.MainActivity"
+        <activity android:name="com.trios2025rm.superpodcast.ui.MainActivity"
             android:exported="false" />
-        <activity android:name="com.trios2025dj.superpodcast.ui.PodcastDetailActivity" />
-        <activity android:name="com.trios2025dj.superpodcast.ui.EpisodeDetailActivity" />
-        <activity android:name="com.trios2025dj.superpodcast.ui.SubscriptionsActivity"
+        <activity android:name="com.trios2025rm.superpodcast.ui.PodcastDetailActivity" />
+        <activity android:name="com.trios2025rm.superpodcast.ui.EpisodeDetailActivity" />
+        <activity android:name="com.trios2025rm.superpodcast.ui.SubscriptionsActivity"
             android:label="My Subscriptions" />
     </application>
 

@@ -6,11 +6,11 @@ plugins {
 }
 
 android {
-    namespace = "com.trios2025dj.superpodcast"
+    namespace = "com.trios2025rm.superpodcast"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.trios2025dj.superpodcast"
+        applicationId = "com.trios2025rm.superpodcast"
         minSdk = 24
         targetSdk = 35
         versionCode = 1

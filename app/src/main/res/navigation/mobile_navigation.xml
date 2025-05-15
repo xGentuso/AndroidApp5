@@ -7,25 +7,25 @@
 
     <fragment
         android:id="@+id/navigation_discover"
-        android:name="com.trios2025dj.superpodcast.ui.fragments.DiscoverFragment"
+        android:name="com.trios2025rm.superpodcast.ui.fragments.DiscoverFragment"
         android:label="Discover"
         tools:layout="@layout/fragment_discover" />
 
     <fragment
         android:id="@+id/navigation_subscriptions"
-        android:name="com.trios2025dj.superpodcast.ui.fragments.SubscriptionsFragment"
+        android:name="com.trios2025rm.superpodcast.ui.fragments.SubscriptionsFragment"
         android:label="Subscriptions"
         tools:layout="@layout/fragment_subscriptions" />
 
     <fragment
         android:id="@+id/navigation_saved_videos"
-        android:name="com.trios2025dj.superpodcast.ui.fragments.SavedVideosFragment"
+        android:name="com.trios2025rm.superpodcast.ui.fragments.SavedVideosFragment"
         android:label="Saved Videos"
         tools:layout="@layout/fragment_saved_videos" />
 
     <fragment
         android:id="@+id/navigation_profile"
-        android:name="com.trios2025dj.superpodcast.ui.fragments.ProfileFragment"
+        android:name="com.trios2025rm.superpodcast.ui.fragments.ProfileFragment"
         android:label="Profile"
         tools:layout="@layout/fragment_profile" />
 </navigation>
